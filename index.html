@@ -141,17 +141,35 @@
       margin: 40px 20px 20px 0;
       opacity: 0.6;
     }
+
+    /* Tiny toggle button */
+    .lang-toggle {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.85em;
+      text-decoration: none;
+      z-index: 9999;
+    }
+    .lang-toggle:hover { background: rgba(255,255,255,0.2); }
   </style>
 </head>
 <body id="top">
+  <a href="?lang=en" class="lang-toggle" id="langToggle" aria-label="Switch language">EN</a>
+
   <div class="container">
     <div class="title-block">
       <h1><a href="#top" style="color:white;text-decoration:none;">Loucani</a></h1>
       <p class="subtitle">Riverberi d'Anima</p>
     </div>
 
-    <div class="description">
-      <p><strong>Loucani</strong> è un tentativo di lettura tra i riflessi di un prisma, nel bagliore urgente della scoperta.<br>
+    <!-- FIXED: valid paragraph structure -->
+    <div class="description" id="heroDescription">
+      <p><strong>Loucani</strong> è un tentativo di lettura tra i riflessi di un prisma, nel bagliore urgente della scoperta.</p>
       <p><strong>Loucani</strong> è il residuo di chi cerca orientando nel fascio di luce il proprio stupore.</p>
     </div>
 
@@ -162,7 +180,7 @@
       <h2>Bio</h2>
       <p>
         Nasce a Verona all’inizio degli anni Novanta e rende la sua cifra distintiva l’essere in cerca, aperto a contaminazioni.
-        Si reca presto alla scoperta di paesi nordici, poi alla volta dell’America Latina, Africa sub-Sahariana ed Europa Mediterranea.
+        Si reca presto alla scoperta di paesi nordici, poi alla volta dell’America Latina, Africa Sub-Sahariana ed Europa Mediterranea.
         Da questo movimento scaturiscono riletture e ibridazioni con culture e concezioni altre che si condensano in ambito musicale.
       </p>
 
@@ -269,10 +287,11 @@
            style="color:#fff;background:#0070ba;padding:10px 16px;border-radius:6px;text-decoration:none;font-weight:bold;">
           Pay €12 via PayPal
         </a>
-        <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=jluk92@hotmail.it&item_name=Loucani+Physical+CD&amount=13.90&currency_code=USD"
+        <!-- FIXED: match advertised USD price -->
+        <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=jluk92@hotmail.it&item_name=Loucani+Physical+CD&amount=10.00&currency_code=USD"
            target="_blank"
            style="color:#fff;background:#0070ba;padding:10px 16px;border-radius:6px;text-decoration:none;font-weight:bold;">
-          Pay $13.90 via PayPal
+          Pay $10 via PayPal
         </a>
       </div>
 
@@ -295,6 +314,7 @@
   </div>
 
   <script>
+    /* One-time fade for the Italian short bio */
     let bioHidden = false;
     window.addEventListener('scroll', function () {
       if (window.scrollY > 100 && !bioHidden) {
@@ -302,8 +322,85 @@
         bioHidden = true;
       }
     });
+
+    /* --- Lightweight i18n: auto EN for non-Italian, and manual ?lang=it|en --- */
+    (function () {
+      const enHero = `
+        <p><strong>Loucani</strong> is an attempt at reading through the reflections of a prism, within the urgent glare of discovery.</p>
+        <p>It is the residue of someone who searches, orienting their sense of wonder within a beam of light.</p>
+      `;
+
+      /* FIXED: "a universe" (not "an universe") */
+      const enBio = `
+        <h2>Bio</h2>
+        <p>
+          Born in Verona, Italy in the early 90s, Loucani makes searching his defining trait, remaining constantly open to
+          contamination and encounter. His path soon leads him toward Northern Europe, and later through Latin America,
+          Sub-Saharan Africa and Mediterranean Europe. From this continuous movement arise reinterpretations and hybridisations
+          with other cultures and worldviews, which find their point of condensation in music.
+        </p>
+        <p>
+          Loucani’s musical reflections begin in an intimate sphere, rooted in the Western singer-songwriter tradition.
+          Rhythm, harmony and metre, however, draw equally from ritual music and jazz, with Afro-Latin references,
+          contemporary independent sounds and subtle links to classical music. The dialogue that emerges inhabits a blurred aesthetic:
+          a universe—or multiverse—of meanings left open to those who choose to listen.
+        </p>
+        <p>
+          Loucani’s sonic vision stems from a practice of research based on the juxtaposition of elements conceived as exercises,
+          as acts of discovery. Voices, plucked strings, wood, metal, skins and horsehair become living materials within an ever-evolving process.
+          Words move through this landscape carrying the legacy of Joni Mitchell, John Martyn and Maynard J. Keenan,
+          passing through Luigi Tenco, Enzo Carella and Jacopo Incani.
+        </p>
+        <p>
+          This vision unfolds primarily in the live dimension, conceived as a space for deep involvement and attentive listening,
+          adaptable to intimate venues, clubs, pubs and cultural spaces.
+        </p>
+      `;
+
+      function getLangPref() {
+        const url = new URL(window.location.href);
+        const qp = url.searchParams.get('lang');
+        if (qp === 'it' || qp === 'en') {
+          localStorage.setItem('lang', qp);
+          return qp;
+        }
+        const stored = localStorage.getItem('lang');
+        if (stored === 'it' || stored === 'en') return stored;
+
+        const nav = (navigator.language || navigator.userLanguage || '').toLowerCase();
+        return nav.startsWith('it') ? 'it' : 'en';
+      }
+
+      function applyLang(lang) {
+        const desc = document.getElementById('heroDescription');
+        const bio = document.getElementById('bio');
+        const toggle = document.getElementById('langToggle');
+
+        if (lang === 'en') {
+          if (desc) desc.innerHTML = enHero;
+          if (bio) bio.innerHTML = enBio;
+          if (toggle) {
+            toggle.textContent = 'IT';
+            const url = new URL(window.location.href);
+            url.searchParams.set('lang', 'it');
+            toggle.href = url.toString();
+          }
+          document.documentElement.lang = 'en';
+        } else {
+          // Keep original Italian content (already in HTML)
+          if (toggle) {
+            toggle.textContent = 'EN';
+            const url = new URL(window.location.href);
+            url.searchParams.set('lang', 'en');
+            toggle.href = url.toString();
+          }
+          document.documentElement.lang = 'it';
+        }
+      }
+
+      const lang = getLangPref();
+      applyLang(lang);
+    })();
   </script>
 </body>
 </html>
-
-
